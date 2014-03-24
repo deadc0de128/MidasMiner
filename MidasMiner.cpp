@@ -166,14 +166,17 @@ public:
 	{
 		const Uint32 ts = SDL_GetTicks();
 
-		SDL_SetRenderDrawColor(rend, 0, 0, 0, SDL_ALPHA_OPAQUE);
-		SDL_RenderFillRect(rend, &m_rc);
-
 		const double durMult = m_wrong ? 2.0 : 1.0;
 
 		double pos = (ts - m_animStartTS) / (DURATION / durMult);
 		
-		if (pos >= durMult) return true;
+		bool ret = false;
+
+		if (pos > durMult)
+		{
+			pos = durMult;
+			ret = true;
+		}
 
 		if (m_wrong && pos > 1)
 		{
@@ -185,10 +188,13 @@ public:
 			}
 		}
 
+		SDL_SetRenderDrawColor(rend, 0, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_RenderFillRect(rend, &m_rc);
+
 		m_objects.DrawTexture(rend, m_rc.x + int(pos * (m_rc.w - OBJ_WIDTH) + 0.5), m_rc.y + int(pos * (m_rc.h - OBJ_HEIGHT) + 0.5), m_clr1);
 		m_objects.DrawTexture(rend, m_rc.x + m_rc.w - OBJ_WIDTH - int(pos * (m_rc.w - OBJ_WIDTH) + 0.5), m_rc.y + m_rc.h - OBJ_HEIGHT - int(pos * (m_rc.h - OBJ_HEIGHT) + 0.5), m_clr2);
 
-		return false;
+		return ret;
 	}
 
 	static const Uint32 DURATION;
@@ -203,7 +209,7 @@ private:
 	bool m_swapped;	
 };
 
-const Uint32 AnimateSwap::DURATION = 600;
+const Uint32 AnimateSwap::DURATION = 500;
 
 class AnimateRemoval : public Animation
 {
@@ -236,7 +242,13 @@ public:
 
 		double scale = 1 - double(timePassed) / (DURATION - AnimateSwap::DURATION);
 
-		if (scale <= 0) return true;
+		bool ret = false;
+
+		if (scale < 0)
+		{
+			scale = 0;
+			ret = true;
+		}
 
 		SDL_Rect rc = { x, y, OBJ_WIDTH + m_xMult * (m_count - 1) * OBJ_WIDTH, OBJ_HEIGHT + m_yMult * (m_count - 1) * OBJ_HEIGHT };
 		SDL_SetRenderDrawColor(rend, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -245,7 +257,7 @@ public:
 		for (int i = 0; i < m_count; i++, x += (m_xMult * OBJ_WIDTH), y += (m_yMult * OBJ_HEIGHT))
 			m_objects.DrawTexture(rend, x, y, m_clr, scale);
 
-		return false;
+		return ret;
 	}
 
 	static const Uint32 DURATION;
@@ -259,7 +271,7 @@ private:
 	Uint32 m_animStartTS;	
 };
 
-const Uint32 AnimateRemoval::DURATION = AnimateSwap::DURATION + 1000;
+const Uint32 AnimateRemoval::DURATION = AnimateSwap::DURATION + 800;
 
 class AnimateHorzRemoval : public AnimateRemoval
 {
