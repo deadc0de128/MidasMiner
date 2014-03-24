@@ -17,8 +17,6 @@ const int OBJ_WIDTH = 40;
 const int OBJ_HEIGHT = 40;
 const int OBJ_COUNT = 5;
 
-const double EPSILON = 0.0001;
-
 const char* OBJ_NAMES[OBJ_COUNT] = { "Blue.png", "Green.png", "Purple.png", "Red.png", "Yellow.png" };
 const SDL_Point OBJ_SIZES[OBJ_COUNT] = { { 35, 36 }, { 35, 35 }, { 35, 35 }, { 34, 36 }, { 38, 37 } };
 
