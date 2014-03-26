@@ -8,17 +8,20 @@
 #include <list>
 #include <memory>
 
-const char WINDOW_CAPTION[] = "Midas Miner";
+static const char WINDOW_CAPTION[] = "Midas Miner";
 
-const int GRID_WIDTH  = 8;
-const int GRID_HEIGHT = 8;
+static const int GRID_WIDTH  = 8;
+static const int GRID_HEIGHT = 8;
 
-const int OBJ_WIDTH = 40;
-const int OBJ_HEIGHT = 40;
-const int OBJ_COUNT = 5;
+static const int OBJ_WIDTH = 40;
+static const int OBJ_HEIGHT = 40;
+static const int OBJ_COUNT = 5;
 
-const char* OBJ_NAMES[OBJ_COUNT] = { "Blue.png", "Green.png", "Purple.png", "Red.png", "Yellow.png" };
-const SDL_Point OBJ_SIZES[OBJ_COUNT] = { { 35, 36 }, { 35, 35 }, { 35, 35 }, { 34, 36 }, { 38, 37 } };
+static const char* OBJ_NAMES[OBJ_COUNT] = { "Blue.png", "Green.png", "Purple.png", "Red.png", "Yellow.png" };
+static const SDL_Point OBJ_SIZES[OBJ_COUNT] = { { 35, 36 }, { 35, 35 }, { 35, 35 }, { 34, 36 }, { 38, 37 } };
+
+static const int RND_CELL = -1;
+static const int MIN_RANGE = 3;
 
 class Image
 {
@@ -211,10 +214,10 @@ private:
 
 const Uint32 AnimateSwap::DURATION = 500;
 
-class AnimateRemoval : public Animation
+class AnimateScaling : public Animation
 {
 public:
-	AnimateRemoval(Objects& objects, int x, int y, int count, int xMult, int yMult, int clr)
+	AnimateScaling(Objects& objects, int x, int y, int count, int xMult, int yMult, int clr, Uint32 delay, bool scaleDown)
 		: m_objects(objects)
 		, m_x(x)
 		, m_y(y)
@@ -222,8 +225,10 @@ public:
 		, m_xMult(xMult)
 		, m_yMult(yMult)
 		, m_clr(clr)
+		, m_scaleDown(scaleDown)
+		, m_animStartTS(SDL_GetTicks())
+		, m_delay(delay)
 	{
-		m_animStartTS = SDL_GetTicks();
 	}
 
 	virtual bool Draw(SDL_Renderer* rend)
@@ -235,19 +240,31 @@ public:
 
 		Uint32 timePassed = ts - m_animStartTS;
 
-		if (timePassed < AnimateSwap::DURATION)
+		if (timePassed < m_delay)
 			return false;
 
-		timePassed -= AnimateSwap::DURATION;
-
-		double scale = 1 - double(timePassed) / (DURATION - AnimateSwap::DURATION);
-
+		double scale;
 		bool ret = false;
 
-		if (scale < 0)
+		if (m_scaleDown)
 		{
-			scale = 0;
-			ret = true;
+			scale = 1 - double(timePassed - m_delay) / DURATION;
+
+			if (scale <= 0)
+			{
+				scale = 0;
+				ret = true;
+			}
+		}
+		else
+		{
+			scale = double(timePassed - m_delay) / DURATION;
+
+			if (scale >= 1)
+			{
+				scale = 1;
+				ret = true;
+			}
 		}
 
 		SDL_Rect rc = { x, y, OBJ_WIDTH + m_xMult * (m_count - 1) * OBJ_WIDTH, OBJ_HEIGHT + m_yMult * (m_count - 1) * OBJ_HEIGHT };
@@ -268,16 +285,36 @@ private:
 	int m_count;
 	int m_xMult, m_yMult;
 	int m_clr;
-	Uint32 m_animStartTS;	
+	bool m_scaleDown;
+	Uint32 m_animStartTS;
+	Uint32 m_delay;
 };
 
-const Uint32 AnimateRemoval::DURATION = AnimateSwap::DURATION + 800;
+const Uint32 AnimateScaling::DURATION = 800;
+
+class AnimateRemoval :  public AnimateScaling
+{
+public:
+	AnimateRemoval(Objects& objects, int x, int y, int count, int xMult, int yMult, int clr, Uint32 delay)
+		: AnimateScaling(objects, x, y, count, xMult, yMult, clr, delay, true)
+	{
+	}
+};
+
+class AnimateAddition :  public AnimateScaling
+{
+public:
+	AnimateAddition(Objects& objects, int x, int y, int count, int xMult, int yMult, int clr, Uint32 delay)
+		: AnimateScaling(objects, x, y, count, xMult, yMult, clr, delay, false)
+	{
+	}
+};
 
 class AnimateHorzRemoval : public AnimateRemoval
 {
 public:
-	AnimateHorzRemoval(Objects& objects, int x, int y, int count, int clr)
-		: AnimateRemoval(objects, x, y, count, 1, 0, clr)
+	AnimateHorzRemoval(Objects& objects, int x, int y, int count, int clr, Uint32 delay)
+		: AnimateRemoval(objects, x, y, count, 1, 0, clr, delay)
 	{
 	}
 };
@@ -285,14 +322,86 @@ public:
 class AnimateVertRemoval : public AnimateRemoval
 {
 public:
-	AnimateVertRemoval(Objects& objects, int x, int y, int count, int clr)
-		: AnimateRemoval(objects, x, y, count, 0, 1, clr)
+	AnimateVertRemoval(Objects& objects, int x, int y, int count, int clr, Uint32 delay)
+		: AnimateRemoval(objects, x, y, count, 0, 1, clr, delay)
 	{
 	}
 };
 
-const int RND_CELL = -1;
-const int MIN_RANGE = 3;
+class AnimateSlide : public Animation
+{
+public:
+	AnimateSlide(Objects& objects, int x, int y1, int y2, int* column, Uint32 delay)
+		: m_objects(objects)
+		, m_x(x)
+		, m_y1(y1)
+		, m_y2(y2)
+		, m_animStartTS(SDL_GetTicks())
+		, m_delay(delay)
+	{
+		m_length = m_y1;
+		
+		while (*column == RND_CELL)
+		{
+			++column;
+			--m_length;
+		}
+
+		memcpy(m_column, column, sizeof(int) * m_length);
+	}
+		
+	bool Draw(SDL_Renderer* rend)
+	{
+		const Uint32 ts = SDL_GetTicks();
+
+		Uint32 timePassed = ts - m_animStartTS;
+
+		if (timePassed < m_delay)
+			return false;
+
+		timePassed -= m_delay;
+
+		double pc = double(timePassed) / DURATION;
+
+		bool ret = false;
+
+		if (pc >= 1)
+		{
+			pc = 1;
+			ret = true;
+		}		
+
+		int y = (m_y1 - m_length) * OBJ_HEIGHT;
+
+		SDL_Rect rc = { m_x * OBJ_WIDTH, y, OBJ_WIDTH, OBJ_HEIGHT * (m_length + m_y2 - m_y1 + 1)  };
+		SDL_SetRenderDrawColor(rend, 0, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_RenderFillRect(rend, &rc);
+
+		const int shift = int(pc * (m_y2 - m_y1 + 1) * OBJ_HEIGHT);
+		y += shift;
+
+		for (int i = 0; i < m_length; ++i, y += OBJ_HEIGHT)
+		{
+			m_objects.DrawTexture(rend, m_x * OBJ_WIDTH, y, m_column[i]);
+		}
+
+		return ret;
+	}
+
+	static Uint32 DURATION;
+
+private:
+	Objects& m_objects;
+	int m_x;
+	int m_y1;
+	int m_y2;	
+	int m_length;
+	int m_column[GRID_HEIGHT];
+	Uint32 m_animStartTS;
+	Uint32 m_delay;
+};
+
+Uint32 AnimateSlide::DURATION = 2000; 
 
 class Grid
 {
@@ -301,6 +410,7 @@ public:
 		: m_objects(obj)
 		, m_animations(anim)
 		, m_selection(false)
+		, m_accumDelay(0)
 	{		
 		for (int x = 0; x < GRID_WIDTH; ++x)
 			for (int y = 0; y < GRID_HEIGHT; ++y)
@@ -344,8 +454,10 @@ public:
 
 		std::swap(clr1, clr2);
 
+		m_accumDelay = AnimateSwap::DURATION;
+
 		TRanges ranges;
-		GetCollapsedRanges(ranges);
+		GetCollapsedRanges(ranges);		
 
 		if (ranges.empty())
 		{
@@ -354,12 +466,12 @@ public:
 			return false;
 		}
 
-		m_animations.AddAnimation(std::auto_ptr<AnimateSwap>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr2, x, y, clr1, false)));
+		m_animations.AddAnimation(std::auto_ptr<AnimateSwap>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr2, x, y, clr1, false)));		
 
 		do
 		{
-			RemoveRanges(ranges);
-			Randomize();
+			RemoveRanges(ranges);			
+			Randomize();			
 		}
 		while (GetCollapsedRanges(ranges));		
 
@@ -411,6 +523,9 @@ private:
 	{
 		TRanges::const_iterator it = ranges.begin();
 
+		int prevX = -1;
+		bool addDelay = false;
+
 		for (; it != ranges.end(); ++it)
 		{
 			const Range& r = *it;
@@ -418,10 +533,24 @@ private:
 			int len = r.y2 - r.y1 + 1;
 
 			memmove(&m_cells[r.x][len], &m_cells[r.x][0], sizeof(m_cells[0][0]) * r.y1);
+
+			if (r.y1)
+			{
+				if (prevX == r.x)
+					m_accumDelay += AnimateSlide::DURATION;
+
+				m_animations.AddAnimation(std::auto_ptr<AnimateSlide>(new AnimateSlide(m_objects, r.x, r.y1, r.y2, &m_cells[r.x][len], m_accumDelay)));
+				addDelay = true;
+			}
+
+			prevX = r.x;
 			
 			for (int i = 0; i < len; ++i)
 				m_cells[r.x][i] = RND_CELL;			
 		}
+
+		if (addDelay)
+			m_accumDelay += AnimateSlide::DURATION;
 	}
 
 	bool CanCollapse(int x, int y)
@@ -452,6 +581,8 @@ private:
 
 	void Randomize()
 	{
+		bool addDelay = false;
+
 		for (int x = 0; x < GRID_WIDTH; ++x)
 			for (int y = 0; y < GRID_HEIGHT; ++y)
 				if (m_cells[x][y] == RND_CELL)
@@ -461,7 +592,13 @@ private:
 						m_cells[x][y] = rand() % OBJ_COUNT;
 					}
 					while (CanCollapse(x, y));
+
+					m_animations.AddAnimation(std::auto_ptr<AnimateAddition>(new AnimateAddition(m_objects, x, y, 1, 1, 0, m_cells[x][y], m_accumDelay)));
+					addDelay = true;
 				}
+
+		if (addDelay)
+			m_accumDelay += AnimateScaling::DURATION;
 	}
 
 	int GetCollapsedRanges(TRanges& out)
@@ -481,7 +618,7 @@ private:
 				{
 					Range r = { x, yStart, y - 1 };
 					ranges.push_back(r);
-					m_animations.AddAnimation(std::auto_ptr<AnimateVertRemoval>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart])));
+					m_animations.AddAnimation(std::auto_ptr<AnimateVertRemoval>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart], m_accumDelay)));
 				}
 				
 				yStart = y;				
@@ -491,7 +628,7 @@ private:
 			{
 				Range r = { x, yStart, y - 1 };
 				ranges.push_back(r);
-				m_animations.AddAnimation(std::auto_ptr<AnimateVertRemoval>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart])));
+				m_animations.AddAnimation(std::auto_ptr<AnimateVertRemoval>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart], m_accumDelay)));
 			}
 		}
 
@@ -512,7 +649,7 @@ private:
 						ranges.push_back(r);						
 					}
 
-					m_animations.AddAnimation(std::auto_ptr<AnimateHorzRemoval>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y])));
+					m_animations.AddAnimation(std::auto_ptr<AnimateHorzRemoval>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y], m_accumDelay)));
 				}
 
 				xStart = x;
@@ -526,7 +663,7 @@ private:
 					ranges.push_back(r);
 				}
 
-				m_animations.AddAnimation(std::auto_ptr<AnimateHorzRemoval>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y])));
+				m_animations.AddAnimation(std::auto_ptr<AnimateHorzRemoval>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y], m_accumDelay)));
 			}
 		}
 
@@ -550,6 +687,9 @@ private:
 
 		out.swap(ranges);
 
+		if (out.size())
+			m_accumDelay += AnimateRemoval::DURATION;
+
 		return out.size();
 	}
 
@@ -558,6 +698,7 @@ private:
 	int m_cells[GRID_WIDTH][GRID_HEIGHT];
 	SDL_Point m_selected;
 	bool m_selection;
+	Uint32 m_accumDelay;
 };
 
 SDL_Point CellFromMouseCoord(int x, int y)
