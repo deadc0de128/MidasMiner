@@ -7,6 +7,7 @@
 #include <vector>
 #include <list>
 #include <memory>
+#include <ctime>
 
 static const char WINDOW_CAPTION[] = "Midas Miner";
 
@@ -290,7 +291,7 @@ private:
 	Uint32 m_delay;
 };
 
-const Uint32 AnimateScaling::DURATION = 800;
+const Uint32 AnimateScaling::DURATION = 500;
 
 class AnimateRemoval :  public AnimateScaling
 {
@@ -331,12 +332,13 @@ public:
 class AnimateSlide : public Animation
 {
 public:
-	AnimateSlide(Objects& objects, int x, int y1, int y2, int* column, Uint32 delay)
+	AnimateSlide(Objects& objects, int x, int y1, int y2, int* column, Uint32 duration, Uint32 delay)
 		: m_objects(objects)
 		, m_x(x)
 		, m_y1(y1)
 		, m_y2(y2)
 		, m_animStartTS(SDL_GetTicks())
+		, m_duration(duration)
 		, m_delay(delay)
 	{
 		m_length = m_y1;
@@ -361,7 +363,7 @@ public:
 
 		timePassed -= m_delay;
 
-		double pc = double(timePassed) / DURATION;
+		double pc = double(timePassed) / m_duration;
 
 		bool ret = false;
 
@@ -388,7 +390,7 @@ public:
 		return ret;
 	}
 
-	static Uint32 DURATION;
+	static Uint32 STEP_DURATION;
 
 private:
 	Objects& m_objects;
@@ -398,10 +400,11 @@ private:
 	int m_length;
 	int m_column[GRID_HEIGHT];
 	Uint32 m_animStartTS;
+	Uint32 m_duration;
 	Uint32 m_delay;
 };
 
-Uint32 AnimateSlide::DURATION = 2000; 
+Uint32 AnimateSlide::STEP_DURATION = 150; 
 
 class Grid
 {
@@ -525,6 +528,7 @@ private:
 
 		int prevX = -1;
 		bool addDelay = false;
+		Uint32 maxAnimLen = 0;
 
 		for (; it != ranges.end(); ++it)
 		{
@@ -536,10 +540,14 @@ private:
 
 			if (r.y1)
 			{
-				if (prevX == r.x)
-					m_accumDelay += AnimateSlide::DURATION;
+				const Uint32 animLen = len * AnimateSlide::STEP_DURATION;
 
-				m_animations.AddAnimation(std::auto_ptr<AnimateSlide>(new AnimateSlide(m_objects, r.x, r.y1, r.y2, &m_cells[r.x][len], m_accumDelay)));
+				if (prevX == r.x)
+					m_accumDelay += animLen;
+
+				maxAnimLen = std::max(animLen, maxAnimLen);
+
+				m_animations.AddAnimation(std::auto_ptr<AnimateSlide>(new AnimateSlide(m_objects, r.x, r.y1, r.y2, &m_cells[r.x][len], animLen, m_accumDelay)));
 				addDelay = true;
 			}
 
@@ -550,7 +558,7 @@ private:
 		}
 
 		if (addDelay)
-			m_accumDelay += AnimateSlide::DURATION;
+			m_accumDelay += maxAnimLen;
 	}
 
 	bool CanCollapse(int x, int y)
@@ -581,6 +589,8 @@ private:
 
 	void Randomize()
 	{
+		srand((unsigned)time(NULL));
+
 		bool addDelay = false;
 
 		for (int x = 0; x < GRID_WIDTH; ++x)
