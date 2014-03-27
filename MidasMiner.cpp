@@ -85,6 +85,7 @@ private:
 class Animation
 {
 public:
+	virtual ~Animation() {}
 	virtual bool Draw(SDL_Renderer* rend) = 0;
 };
 
@@ -451,7 +452,7 @@ public:
 
 		if (clr1 == clr2)
 		{
-			m_animations.AddAnimation(std::auto_ptr<AnimateSwap>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr1, x, y, clr2, true)));
+			m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr1, x, y, clr2, true)));
 			return false;
 		}
 
@@ -465,11 +466,11 @@ public:
 		if (ranges.empty())
 		{
 			std::swap(clr1, clr2);
-			m_animations.AddAnimation(std::auto_ptr<AnimateSwap>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr1, x, y, clr2, true)));
+			m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr1, x, y, clr2, true)));
 			return false;
 		}
 
-		m_animations.AddAnimation(std::auto_ptr<AnimateSwap>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr2, x, y, clr1, false)));		
+		m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateSwap(m_objects, m_selected.x, m_selected.y, clr2, x, y, clr1, false)));		
 
 		do
 		{
@@ -547,7 +548,7 @@ private:
 
 				maxAnimLen = std::max(animLen, maxAnimLen);
 
-				m_animations.AddAnimation(std::auto_ptr<AnimateSlide>(new AnimateSlide(m_objects, r.x, r.y1, r.y2, &m_cells[r.x][len], animLen, m_accumDelay)));
+				m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateSlide(m_objects, r.x, r.y1, r.y2, &m_cells[r.x][len], animLen, m_accumDelay)));
 				addDelay = true;
 			}
 
@@ -603,7 +604,7 @@ private:
 					}
 					while (CanCollapse(x, y));
 
-					m_animations.AddAnimation(std::auto_ptr<AnimateAddition>(new AnimateAddition(m_objects, x, y, 1, 1, 0, m_cells[x][y], m_accumDelay)));
+					m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateAddition(m_objects, x, y, 1, 1, 0, m_cells[x][y], m_accumDelay)));
 					addDelay = true;
 				}
 
@@ -628,7 +629,7 @@ private:
 				{
 					Range r = { x, yStart, y - 1 };
 					ranges.push_back(r);
-					m_animations.AddAnimation(std::auto_ptr<AnimateVertRemoval>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart], m_accumDelay)));
+					m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart], m_accumDelay)));
 				}
 				
 				yStart = y;				
@@ -638,7 +639,7 @@ private:
 			{
 				Range r = { x, yStart, y - 1 };
 				ranges.push_back(r);
-				m_animations.AddAnimation(std::auto_ptr<AnimateVertRemoval>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart], m_accumDelay)));
+				m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateVertRemoval(m_objects, x, yStart, y - yStart, m_cells[x][yStart], m_accumDelay)));
 			}
 		}
 
@@ -659,7 +660,7 @@ private:
 						ranges.push_back(r);						
 					}
 
-					m_animations.AddAnimation(std::auto_ptr<AnimateHorzRemoval>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y], m_accumDelay)));
+					m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y], m_accumDelay)));
 				}
 
 				xStart = x;
@@ -673,7 +674,7 @@ private:
 					ranges.push_back(r);
 				}
 
-				m_animations.AddAnimation(std::auto_ptr<AnimateHorzRemoval>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y], m_accumDelay)));
+				m_animations.AddAnimation(std::auto_ptr<Animation>(new AnimateHorzRemoval(m_objects, xStart, y, x - xStart, m_cells[xStart][y], m_accumDelay)));
 			}
 		}
 
