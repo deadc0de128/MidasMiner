@@ -3,7 +3,7 @@
 #include <SDL_image.h>
 #include <cassert>
 
-static const char* OBJ_NAMES[OBJ_COUNT] = { "Blue.png", "Green.png", "Purple.png", "Red.png", "Yellow.png" };
+static const char* OBJ_NAMES[OBJ_COUNT] = { ASSET_NAME("Blue.png"), ASSET_NAME("Green.png"), ASSET_NAME("Purple.png"), ASSET_NAME("Red.png"), ASSET_NAME("Yellow.png") };
 static const SDL_Point OBJ_SIZES[OBJ_COUNT] = { { 35, 36 }, { 35, 35 }, { 35, 35 }, { 34, 36 }, { 38, 37 } };
 
 bool Image::Load(SDL_Renderer* rend, const char* name)

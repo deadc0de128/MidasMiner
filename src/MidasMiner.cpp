@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
 	SDL_SetWindowTitle(win, WINDOW_CAPTION);
 
-	SDL_Surface* icon = IMG_Load("Purple.png");
+	SDL_Surface* icon = IMG_Load(ASSET_NAME("Purple.png"));
 
 	if (!icon)
 	{

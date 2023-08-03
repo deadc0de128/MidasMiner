@@ -6,6 +6,12 @@ struct SDL_Point;
 
 #include <cassert>
 
+#if defined(__unix__)
+    #define ASSET_NAME(s) "assets/" s
+#else
+    #define ASSET_NAME(s) "assets\\" s
+#endif
+
 class Image
 {
 public:
