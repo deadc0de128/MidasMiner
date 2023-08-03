@@ -3,7 +3,7 @@
 #include "Grid.h"
 
 #include <SDL.h>
-#include <SDL_Image.h>
+#include <SDL_image.h>
 
 static const char WINDOW_CAPTION[] = "Midas Miner";
 static const SDL_Color CLEAR_COLOR = {   0,   0,   0, SDL_ALPHA_OPAQUE };
@@ -12,7 +12,7 @@ static const Uint32 GAME_LEN = 60000; // 60 sec
 void ClearWindow(SDL_Renderer* rend)
 {
 	SDL_SetRenderDrawColor(rend, CLEAR_COLOR.r, CLEAR_COLOR.g, CLEAR_COLOR.b, CLEAR_COLOR.a);
-	SDL_RenderClear(rend);	
+	SDL_RenderClear(rend);
 }
 
 void GetGridRect(SDL_Window* win, SDL_Rect* gridPos)
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	atexit(IMG_Quit);	
+	atexit(IMG_Quit);
 
 	SDL_Window* win;
 	SDL_Renderer* rend;
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 	}
 
 	SDL_SetWindowIcon(win, icon);
-	
+
 	ClearWindow(rend);
 
 	Objects objects;
@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 	}
 
 	Animations anim;
-	
+
 	SDL_Rect gridPos = { 0, 0, 0, 0 };
 	GetGridRect(win, &gridPos);
 
@@ -167,10 +167,10 @@ int main(int argc, char* argv[])
 			if (insideGrid)
 			{
 				ClearWindow(rend);
-			
+
 				if (grid.HasSelection())
 				{
-					grid.Swap(cell.x, cell.y);				
+					grid.Swap(cell.x, cell.y);
 				}
 				else
 				{
@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	
+
 	SDL_RemoveTimer(idTimer);
 	SDL_FreeSurface(icon);
 	SDL_DestroyRenderer(rend);
