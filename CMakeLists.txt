@@ -35,7 +35,8 @@ find_package(SDL2 REQUIRED)
 
 # Add source to this project's executable.
 include_directories(${SDL2_INCLUDE_DIRS})
-add_executable(MidasMiner Animations.cpp Grid.cpp MidasMiner.cpp Objects.cpp)
+add_executable(MidasMiner "")
+add_subdirectory(src)
 target_link_libraries(MidasMiner ${SDL2_LIBRARIES} SDL2_image)
 
 
