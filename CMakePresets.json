@@ -12,8 +12,8 @@
         "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "environment": {
-        "BOOST_ROOT": "C:\\Users\\maxim\\source\\boost",
-        "PATH": "$env{BOOST_ROOT}\\lib;$penv{PATH}"
+        "SDL2_DIR": "..\\..\\SDL2-2.28.2",
+        "SDL2_IMAGE_DIR": "..\\..\\SDL2_image-2.6.3"
       },
       "condition": {
         "type": "equals",
