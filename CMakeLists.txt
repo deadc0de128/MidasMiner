@@ -1,6 +1,3 @@
-﻿# CMakeList.txt : CMake project for stella_disasm, include source and define
-# project specific logic here.
-#
 cmake_minimum_required(VERSION 3.20)
 
 cmake_policy(SET CMP0076 NEW)
@@ -32,11 +29,10 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 find_package(SDL2 REQUIRED)
+find_package(SDL2_image REQUIRED)
 
-# Add source to this project's executable.
-include_directories(${SDL2_INCLUDE_DIRS})
 add_executable(MidasMiner "")
+target_include_directories(MidasMiner PRIVATE SDL2::SDL2 SDL2_image::SDL2_image)
+target_link_libraries(MidasMiner SDL2::SDL2 SDL2::SDL2main SDL2_image::SDL2_image)
+
 add_subdirectory(src)
-target_link_libraries(MidasMiner ${SDL2_LIBRARIES} SDL2_image)
-
-

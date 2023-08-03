@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	atexit(SDL_Quit);
+//	atexit(SDL_Quit);
 
 	if (!IMG_Init(IMG_INIT_PNG))
 	{
@@ -94,33 +94,6 @@ int main(int argc, char* argv[])
 
 	SDL_Rect gridPos = { 0, 0, 0, 0 };
 	GetGridRect(win, &gridPos);
-
-/*	int cells[GRID_WIDTH][GRID_HEIGHT] = { { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 } };*/
-
-/*	int cells[GRID_WIDTH][GRID_HEIGHT] = { { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 2, 2, 3, 2, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 } };
-
-	int cells[GRID_WIDTH][GRID_HEIGHT] = { { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 3, 2, 3, 2, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 },
-										   { 0, 1, 2, 3, 4, 0, 1, 2 },
-										   { 4, 3, 0, 1, 0, 4, 3, 0 } };*/
 
 	Grid grid(rend, objects, anim, gridPos);
 	grid.Redraw();
@@ -200,6 +173,8 @@ int main(int argc, char* argv[])
 	SDL_FreeSurface(icon);
 	SDL_DestroyRenderer(rend);
 	SDL_DestroyWindow(win);
+
+	SDL_Quit();
 
 	return 0;
 }
