@@ -36,3 +36,20 @@ target_include_directories(MidasMiner PRIVATE SDL2::SDL2 SDL2_image::SDL2_image)
 target_link_libraries(MidasMiner SDL2::SDL2 SDL2::SDL2main SDL2_image::SDL2_image)
 
 add_subdirectory(src)
+
+if (MSVC)
+    get_target_property(SDL2_DLL SDL2::SDL2 IMPORTED_LOCATION)
+    get_target_property(SDL2_IMAGE_DLL SDL2_image::SDL2_image IMPORTED_LOCATION)
+
+    add_custom_command(
+        TARGET MidasMiner POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${SDL2_DLL}
+                ${CMAKE_CURRENT_BINARY_DIR})
+
+    add_custom_command(
+        TARGET MidasMiner POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${SDL2_IMAGE_DLL}
+                ${CMAKE_CURRENT_BINARY_DIR})
+endif()
