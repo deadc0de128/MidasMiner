@@ -23,7 +23,7 @@ fi
 NPROC=$(getconf _NPROCESSORS_ONLN)
 
 BUILD_DIR="./linux-build/${PRESET}"
-cmake -S . --preset ${PRESET} ${CONFIGURE_ARGS} ${GENERATOR:+"${GENERATOR}"}
-RET=$?; if [[ ${RET} -ne 0 ]]; then exit ${RET}; fi
+echo CMake generate... && \
+cmake -S . --preset ${PRESET} ${CONFIGURE_ARGS} ${GENERATOR:+"${GENERATOR}"} && \
+echo CMake build... && \
 cmake --build ${BUILD_DIR} -j ${NPROC} --verbose
-RET=$?; if [[ ${RET} -ne 0 ]]; then exit ${RET}; fi
